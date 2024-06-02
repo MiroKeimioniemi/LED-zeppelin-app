@@ -1,15 +1,18 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 // Midground widget consists of three stacked, predefined SVG images, the colors 
 // of which are progressively darker shades of the color provided as a parameter
 class Midground extends StatelessWidget {
-  
-  // Midground widget constructor with color, brightness and isOn parameters
-  const Midground({super.key, required this.color, required this.brightness, required this.isOn});
+
   final Color color;
   final double brightness;
   final bool isOn;
+  
+  // Midground widget constructor with color, brightness and isOn parameters
+  const Midground({super.key, required this.color, required this.brightness, required this.isOn});
 
   // SVG definitions
   final String svg1 = 
@@ -38,15 +41,15 @@ class Midground extends StatelessWidget {
       alignment: Alignment.bottomCenter,
       children: <Widget>[
         ColorFiltered(
-          colorFilter: ColorFilter.mode(HSLColor.fromColor(color).withLightness(0.5).toColor(), BlendMode.srcIn),
+          colorFilter: ColorFilter.mode(isOn? HSLColor.fromColor(color).withLightness(max(0.1, brightness / 2)).toColor() : Color.fromARGB(255, 30, 30, 30), BlendMode.srcIn),
           child: SvgPicture.string(svg1, height: MediaQuery.of(context).size.height / 2, fit: BoxFit.fill,),
         ),
         ColorFiltered(
-          colorFilter: ColorFilter.mode(HSLColor.fromColor(color).withLightness(0.4).toColor(), BlendMode.srcIn),
+          colorFilter: ColorFilter.mode(isOn? HSLColor.fromColor(color).withLightness(max(0.07, brightness / 2 - 0.1)).toColor() : Color.fromARGB(255, 20, 20, 20), BlendMode.srcIn),
           child: SvgPicture.string(svg2, height: MediaQuery.of(context).size.height / 2.7, fit: BoxFit.fill,),
         ),
         ColorFiltered(
-          colorFilter: ColorFilter.mode(HSLColor.fromColor(color).withLightness(0.3).toColor(), BlendMode.srcIn),
+          colorFilter: ColorFilter.mode(isOn? HSLColor.fromColor(color).withLightness(max(0.03, brightness / 2 - 0.2)).toColor() : const Color.fromARGB(255, 10, 10, 10), BlendMode.srcIn),
           child: SvgPicture.string(svg3, height: MediaQuery.of(context).size.height / 3.2, fit: BoxFit.fill,),
         ),
       ],

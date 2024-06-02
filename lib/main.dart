@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:led_zeppelin_app/components/celestial.dart';
 import 'package:provider/provider.dart';
 
 import 'components/gradient_background.dart';
@@ -23,7 +24,7 @@ class LampState extends ChangeNotifier {
   // Lamp state variables
   bool _isOn = true;
   double _brightness = 1;
-  Color _color = Colors.blue;
+  Color _color = Colors.blue;               // Deal with black
   int _selectedAnimation = 1;
   DateTime _nextAlarm = DateTime.now();
 
@@ -73,11 +74,14 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       body: Stack(
         children: <Widget>[
+          // The bottommost background element
           GradientBackground(
             isOn: Provider.of<LampState>(context).isOn,
             color: Provider.of<LampState>(context).color,
             brightness: Provider.of<LampState>(context).brightness,
           ),
+          // CelestialBody widget is the sun/moon element that indicates the brightness level and the selcted color
+          CelestialBody(isDay: true, brightness: Provider.of<LampState>(context).brightness, color: Provider.of<LampState>(context).color),
           // Midground widget is the topmost background element
           Expanded(
             child: Align(
