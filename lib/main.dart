@@ -86,18 +86,28 @@ class _MyHomePageState extends State<MyHomePage> {
         children: <Widget>[
           // The bottommost background element
           Consumer<LampState>(
-            builder: (context, lampState, child) => GradientBackground(
-              isOn: lampState.isOn,
-              color: lampState.color,
-              brightness: lampState.brightness,
+            builder: (context, lampState, child) => GestureDetector(
+              onTap: () {
+                lampState.toggle();
+              },
+              child: GradientBackground(
+                isOn: lampState.isOn,
+                color: lampState.color,
+                brightness: lampState.brightness,
+              ),
             ),
           ),
           // CelestialBody widget is the sun/moon element that indicates the brightness level and the selected color
           Consumer<LampState>(
-            builder: (context, lampState, child) => CelestialBody(
-                isDay: true,
-                brightness: lampState.brightness,
-                color: lampState.color),
+            builder: (context, lampState, child) => GestureDetector(
+              onTap: () {
+                lampState.toggle();
+              },
+              child: CelestialBody(
+                  isDay: true,
+                  brightness: lampState.brightness,
+                  color: lampState.color),
+            ),
           ),
           // Midground widget is the topmost background element
           Expanded(
@@ -113,37 +123,58 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Consumer<LampState>(
-                builder: (context, lampState, child) => Slider(
-                    value: lampState.brightness,
-                    max: 1.0,
-                    // divisions: 250,
-                    // label: '${(lampState.brightness * 100).toInt()}%',
-                    onChanged: (double value) {
-                      lampState.setBrightness(value);
-                    }),
+              Expanded(
+                child: Consumer<LampState>(
+                    builder: (context, lampState, child) => Slider(
+                        value: lampState.brightness,
+                        min: 0.0,
+                        max: 1.0,
+                        onChanged: (double value) {
+                          lampState.setBrightness(value);
+                        }),
+                ),
               ),
               Consumer<LampState>(
-                builder: (context, lampState, child) => IconButton(
-                  icon: Icon(Icons.color_lens),
-                  onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      
-                      builder: (BuildContext context) {
-                        return SingleChildScrollView(
-                          child: HueRingPicker(
-                            pickerColor: lampState.color,
-                            hueRingStrokeWidth: 30,
-                            onColorChanged: (Color color) {
-                              lampState.setColor(color);
-                            },
-                          ),
-                        );
-                      },
-                    );
-                  },
+                builder: (context, lampState, child) => Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: IconButton(
+                    icon: const Icon(Icons.color_lens),
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        backgroundColor: const Color.fromARGB(255, 20, 20, 20),
+                        builder: (BuildContext context) {
+                          return Padding(
+                            padding: const EdgeInsets.all(32.0),
+                            child: SingleChildScrollView(
+                              child: Theme(
+                                data: Theme.of(context).copyWith(
+                                  textTheme: Theme.of(context).textTheme.apply(
+                                    bodyColor: Colors.white,
+                                    displayColor: Colors.white,
+                                  ),
+                                ),
+                                child: HueRingPicker(
+                                  pickerColor: lampState.color,
+                                  hueRingStrokeWidth: 30,
+                                  displayThumbColor: false,
+                                  onColorChanged: (Color color) {
+                                    if (color.red == color.green && color.green == color.blue) {
+                                      lampState.setColor(Colors.white);
+                                    } else {
+                                      lampState.setColor(HSLColor.fromColor(color).withLightness(0.7).withSaturation(1).toColor());
+                                    }
+                                  },
+                                ),
+                              )
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
               ),
             ],
