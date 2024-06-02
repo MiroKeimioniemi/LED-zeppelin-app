@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:led_zeppelin_app/components/celestial.dart';
+import 'package:led_zeppelin_app/components/next_alarm.dart';
 import 'package:provider/provider.dart';
 
 import 'components/gradient_background.dart';
@@ -48,6 +49,11 @@ class LampState extends ChangeNotifier {
 
   void setColor(Color color) {
     _color = color;
+    notifyListeners();
+  }
+
+  void setNextAlarm(DateTime nextAlarm) {
+    _nextAlarm = nextAlarm;
     notifyListeners();
   }
 }
@@ -122,60 +128,71 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Column(
             children: [
-              Expanded(
-                child: Consumer<LampState>(
-                    builder: (context, lampState, child) => Slider(
-                        value: lampState.brightness,
-                        min: 0.0,
-                        max: 1.0,
-                        onChanged: (double value) {
-                          lampState.setBrightness(value);
-                        }),
+              SizedBox(height: 96),
+              Consumer<LampState>(
+                builder: (context, lampState, child) => NextAlarm(
+                  nextAlarm: lampState.nextAlarm,
+                  brightness: lampState.brightness,
                 ),
               ),
-              Consumer<LampState>(
-                builder: (context, lampState, child) => Padding(
-                  padding: const EdgeInsets.only(right: 16.0),
-                  child: IconButton(
-                    icon: const Icon(Icons.color_lens),
-                    onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        backgroundColor: const Color.fromARGB(255, 20, 20, 20),
-                        builder: (BuildContext context) {
-                          return Padding(
-                            padding: const EdgeInsets.all(32.0),
-                            child: SingleChildScrollView(
-                              child: Theme(
-                                data: Theme.of(context).copyWith(
-                                  textTheme: Theme.of(context).textTheme.apply(
-                                    bodyColor: Colors.white,
-                                    displayColor: Colors.white,
-                                  ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Consumer<LampState>(
+                        builder: (context, lampState, child) => Slider(
+                            value: lampState.brightness,
+                            min: 0.0,
+                            max: 1.0,
+                            onChanged: (double value) {
+                              lampState.setBrightness(value);
+                            }),
+                    ),
+                  ),
+                  Consumer<LampState>(
+                    builder: (context, lampState, child) => Padding(
+                      padding: const EdgeInsets.only(right: 16.0),
+                      child: IconButton(
+                        icon: const Icon(Icons.color_lens),
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            backgroundColor: const Color.fromARGB(255, 20, 20, 20),
+                            builder: (BuildContext context) {
+                              return Padding(
+                                padding: const EdgeInsets.all(32.0),
+                                child: SingleChildScrollView(
+                                  child: Theme(
+                                    data: Theme.of(context).copyWith(
+                                      textTheme: Theme.of(context).textTheme.apply(
+                                        bodyColor: Colors.white,
+                                        displayColor: Colors.white,
+                                      ),
+                                    ),
+                                    child: HueRingPicker(
+                                      pickerColor: lampState.color,
+                                      hueRingStrokeWidth: 30,
+                                      displayThumbColor: false,
+                                      onColorChanged: (Color color) {
+                                        if (color.red == color.green && color.green == color.blue) {
+                                          lampState.setColor(Colors.white);
+                                        } else {
+                                          lampState.setColor(HSLColor.fromColor(color).withLightness(0.7).withSaturation(1).toColor());
+                                        }
+                                      },
+                                    ),
+                                  )
                                 ),
-                                child: HueRingPicker(
-                                  pickerColor: lampState.color,
-                                  hueRingStrokeWidth: 30,
-                                  displayThumbColor: false,
-                                  onColorChanged: (Color color) {
-                                    if (color.red == color.green && color.green == color.blue) {
-                                      lampState.setColor(Colors.white);
-                                    } else {
-                                      lampState.setColor(HSLColor.fromColor(color).withLightness(0.7).withSaturation(1).toColor());
-                                    }
-                                  },
-                                ),
-                              )
-                            ),
+                              );
+                            },
                           );
                         },
-                      );
-                    },
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
