@@ -1,29 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import 'components/gradient_background.dart';
 import 'components/midground.dart';
 
 void main() {
+
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp])
+.then((value) => 
   runApp(
     ChangeNotifierProvider(
       create: (context) => LampState(),
       child: const LEDZeppelinApp(),
     ),
-  );
+  ));
 }
 
 // App state
 class LampState extends ChangeNotifier {
   // Lamp state variables
-  bool _isOn = false;
-  int _brightness = 100;
-  Color _color = Colors.white;
+  bool _isOn = true;
+  double _brightness = 1;
+  Color _color = Colors.blue;
   int _selectedAnimation = 1;
   DateTime _nextAlarm = DateTime.now();
 
   // Getters
   bool get isOn => _isOn;
-  int get brightness => _brightness;
+  double get brightness => _brightness;
   Color get color => _color;
   int get selectedAnimation => _selectedAnimation;
   DateTime get nextAlarm => _nextAlarm;
@@ -67,11 +73,20 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       body: Stack(
         children: <Widget>[
+          GradientBackground(
+            isOn: Provider.of<LampState>(context).isOn,
+            color: Provider.of<LampState>(context).color,
+            brightness: Provider.of<LampState>(context).brightness,
+          ),
           // Midground widget is the topmost background element
           Expanded(
             child: Align(
               alignment: FractionalOffset.bottomCenter,
-              child: Midground(color: Provider.of<LampState>(context).color),
+              child: Midground(
+                isOn: Provider.of<LampState>(context).isOn,
+                color: Provider.of<LampState>(context).color,
+                brightness: Provider.of<LampState>(context).brightness,
+              ),
             ),
           ),
         ],

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 // Midground widget consists of three stacked, predefined SVG images, the colors 
 // of which are progressively darker shades of the color provided as a parameter
 class Midground extends StatelessWidget {
   
-  // Midground widget constructor with color parameter
-  const Midground({super.key, required this.color});
+  // Midground widget constructor with color, brightness and isOn parameters
+  const Midground({super.key, required this.color, required this.brightness, required this.isOn});
   final Color color;
+  final double brightness;
+  final bool isOn;
 
   // SVG definitions
   final String svg1 = 
@@ -37,15 +38,15 @@ class Midground extends StatelessWidget {
       alignment: Alignment.bottomCenter,
       children: <Widget>[
         ColorFiltered(
-          colorFilter: ColorFilter.mode(HSLColor.fromColor(color).withLightness(0.9).toColor(), BlendMode.srcIn),
+          colorFilter: ColorFilter.mode(HSLColor.fromColor(color).withLightness(0.5).toColor(), BlendMode.srcIn),
           child: SvgPicture.string(svg1, height: MediaQuery.of(context).size.height / 2, fit: BoxFit.fill,),
         ),
         ColorFiltered(
-          colorFilter: ColorFilter.mode(HSLColor.fromColor(color).withLightness(0.8).toColor(), BlendMode.srcIn),
+          colorFilter: ColorFilter.mode(HSLColor.fromColor(color).withLightness(0.4).toColor(), BlendMode.srcIn),
           child: SvgPicture.string(svg2, height: MediaQuery.of(context).size.height / 2.7, fit: BoxFit.fill,),
         ),
         ColorFiltered(
-          colorFilter: ColorFilter.mode(HSLColor.fromColor(color).withLightness(0.7).toColor(), BlendMode.srcIn),
+          colorFilter: ColorFilter.mode(HSLColor.fromColor(color).withLightness(0.3).toColor(), BlendMode.srcIn),
           child: SvgPicture.string(svg3, height: MediaQuery.of(context).size.height / 3.2, fit: BoxFit.fill,),
         ),
       ],
