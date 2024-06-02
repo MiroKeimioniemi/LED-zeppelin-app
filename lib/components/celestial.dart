@@ -13,7 +13,7 @@ class CelestialBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      duration: const Duration(seconds: 1),
+      duration: const Duration(seconds: 0),
       curve: Curves.easeInOut,
       alignment: Alignment(0, lerpDouble(0.35, -0.35, brightness)!),
       // Sun

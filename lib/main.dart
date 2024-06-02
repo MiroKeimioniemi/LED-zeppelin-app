@@ -7,16 +7,15 @@ import 'components/gradient_background.dart';
 import 'components/midground.dart';
 
 void main() {
-
+  // Ensure that the app is initialized and the orientation is locked to portrait mode
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp])
-.then((value) => 
-  runApp(
-    ChangeNotifierProvider(
-      create: (context) => LampState(),
-      child: const LEDZeppelinApp(),
-    ),
-  ));
+      .then((value) => runApp(
+            ChangeNotifierProvider(
+              create: (context) => LampState(),
+              child: const LEDZeppelinApp(),
+            ),
+          ));
 }
 
 // App state
@@ -24,7 +23,7 @@ class LampState extends ChangeNotifier {
   // Lamp state variables
   bool _isOn = true;
   double _brightness = 1;
-  Color _color = Colors.blue;               // Deal with black
+  Color _color = Colors.white; // Deal with black
   int _selectedAnimation = 1;
   DateTime _nextAlarm = DateTime.now();
 
@@ -38,6 +37,11 @@ class LampState extends ChangeNotifier {
   // Update functions
   void toggle() {
     _isOn = !_isOn;
+    notifyListeners();
+  }
+
+  void setBrightness(double brightness) {
+    _brightness = brightness;
     notifyListeners();
   }
 }
@@ -75,24 +79,39 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Stack(
         children: <Widget>[
           // The bottommost background element
-          GradientBackground(
-            isOn: Provider.of<LampState>(context).isOn,
-            color: Provider.of<LampState>(context).color,
-            brightness: Provider.of<LampState>(context).brightness,
+          Consumer<LampState>(
+            builder: (context, lampState, child) => GradientBackground(
+              isOn: lampState.isOn,
+              color: lampState.color,
+              brightness: lampState.brightness,
+            ),
           ),
-          // CelestialBody widget is the sun/moon element that indicates the brightness level and the selcted color
-          CelestialBody(isDay: true, brightness: Provider.of<LampState>(context).brightness, color: Provider.of<LampState>(context).color),
+          // CelestialBody widget is the sun/moon element that indicates the brightness level and the selected color
+          Consumer<LampState>(
+            builder: (context, lampState, child) => CelestialBody(
+              isDay: true,
+              brightness: lampState.brightness,
+              color: lampState.color
+              ),
+          ),
           // Midground widget is the topmost background element
           Expanded(
             child: Align(
               alignment: FractionalOffset.bottomCenter,
-              child: Midground(
-                isOn: Provider.of<LampState>(context).isOn,
-                color: Provider.of<LampState>(context).color,
-                brightness: Provider.of<LampState>(context).brightness,
+              child: Consumer<LampState>(
+                builder: (context, lampState, child) => Midground(
+                  isOn: lampState.isOn,
+                  color: lampState.color,
+                  brightness: lampState.brightness,
+                ),
               ),
             ),
           ),
+          Consumer<LampState>(
+            builder: (context, lampState, child) => 
+              Slider(value: lampState.brightness, onChanged: (double value) {lampState.setBrightness(value);}),
+            ),
+          
         ],
       ),
     );
