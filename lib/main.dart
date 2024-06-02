@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:led_zeppelin_app/components/celestial.dart';
 import 'package:provider/provider.dart';
 
@@ -44,6 +45,11 @@ class LampState extends ChangeNotifier {
     _brightness = brightness;
     notifyListeners();
   }
+
+  void setColor(Color color) {
+    _color = color;
+    notifyListeners();
+  }
 }
 
 class LEDZeppelinApp extends StatelessWidget {
@@ -55,7 +61,7 @@ class LEDZeppelinApp extends StatelessWidget {
     return MaterialApp(
       title: 'LED Zeppelin App',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
         useMaterial3: true,
       ),
       home: const MyHomePage(title: 'LED Zeppelin App Home Page'),
@@ -89,10 +95,9 @@ class _MyHomePageState extends State<MyHomePage> {
           // CelestialBody widget is the sun/moon element that indicates the brightness level and the selected color
           Consumer<LampState>(
             builder: (context, lampState, child) => CelestialBody(
-              isDay: true,
-              brightness: lampState.brightness,
-              color: lampState.color
-              ),
+                isDay: true,
+                brightness: lampState.brightness,
+                color: lampState.color),
           ),
           // Midground widget is the topmost background element
           Expanded(
@@ -107,162 +112,44 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
           ),
-          Consumer<LampState>(
-            builder: (context, lampState, child) => 
-              Slider(value: lampState.brightness, onChanged: (double value) {lampState.setBrightness(value);}),
-            ),
-          
+          Row(
+            children: [
+              Consumer<LampState>(
+                builder: (context, lampState, child) => Slider(
+                    value: lampState.brightness,
+                    max: 1.0,
+                    // divisions: 250,
+                    // label: '${(lampState.brightness * 100).toInt()}%',
+                    onChanged: (double value) {
+                      lampState.setBrightness(value);
+                    }),
+              ),
+              Consumer<LampState>(
+                builder: (context, lampState, child) => IconButton(
+                  icon: Icon(Icons.color_lens),
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      
+                      builder: (BuildContext context) {
+                        return SingleChildScrollView(
+                          child: HueRingPicker(
+                            pickerColor: lampState.color,
+                            hueRingStrokeWidth: 30,
+                            onColorChanged: (Color color) {
+                              lampState.setColor(color);
+                            },
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 }
-
-
-// ChatGPT version
-
-
-// import 'package:flutter/material.dart';
-// import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-
-// void main() {
-//   runApp(MyApp());
-// }
-
-// class MyApp extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'Sun and Moon Slider',
-//       theme: ThemeData(
-//         primarySwatch: Colors.blue,
-//       ),
-//       home: MyHomePage(),
-//     );
-//   }
-// }
-
-// class MyHomePage extends StatefulWidget {
-//   @override
-//   _MyHomePageState createState() => _MyHomePageState();
-// }
-
-// class _MyHomePageState extends State<MyHomePage> {
-//   double _sliderValue = 0.5;
-//   Color _selectedColor = Colors.orange;
-//   List<TimeOfDay> _alarms = [];
-
-//   void _openColorPicker() {
-//     showDialog(
-//       context: context,
-//       builder: (BuildContext context) {
-//         return AlertDialog(
-//           title: Text('Pick a color'),
-//           content: SingleChildScrollView(
-//             child: ColorPicker(
-//               pickerColor: _selectedColor,
-//               onColorChanged: (Color color) {
-//                 setState(() {
-//                   _selectedColor = color;
-//                 });
-//               },
-//             ),
-//           ),
-//           actions: <Widget>[
-//             ElevatedButton(
-//               child: Text('Got it'),
-//               onPressed: () {
-//                 Navigator.of(context).pop();
-//               },
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
-
-//   void _setAlarm() async {
-//     final TimeOfDay? picked = await showTimePicker(
-//       context: context,
-//       initialTime: TimeOfDay.now(),
-//     );
-//     if (picked != null) {
-//       setState(() {
-//         _alarms.add(picked);
-//       });
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text('Sun and Moon Slider'),
-//         actions: [
-//           IconButton(
-//             icon: Icon(Icons.alarm_add),
-//             onPressed: _setAlarm,
-//           ),
-//         ],
-//       ),
-//       body: Stack(
-//         children: [
-//           Container(
-//             decoration: BoxDecoration(
-//               gradient: LinearGradient(
-//                 begin: Alignment.topCenter,
-//                 end: Alignment.bottomCenter,
-//                 colors: [_selectedColor.withOpacity(0.5), Colors.black],
-//                 stops: [_sliderValue, _sliderValue],
-//               ),
-//             ),
-//           ),
-//           Column(
-//             children: <Widget>[
-//               Expanded(
-//                 child: Stack(
-//                   children: [
-//                     Positioned(
-//                       left: MediaQuery.of(context).size.width / 2 - 50,
-//                       bottom: _sliderValue * MediaQuery.of(context).size.height - 100,
-//                       child: Icon(
-//                         _sliderValue < 0.5 ? Icons.nightlight_round : Icons.wb_sunny,
-//                         color: Colors.white,
-//                         size: 100,
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//               Slider(
-//                 value: _sliderValue,
-//                 onChanged: (double value) {
-//                   setState(() {
-//                     _sliderValue = value;
-//                   });
-//                 },
-//               ),
-//               ElevatedButton(
-//                 onPressed: _openColorPicker,
-//                 child: Text('Pick Color'),
-//               ),
-//               Expanded(
-//                 child: ListView.builder(
-//                   itemCount: _alarms.length,
-//                   itemBuilder: (context, index) {
-//                     return ListTile(
-//                       title: Text(
-//                         _alarms[index].format(context),
-//                         style: TextStyle(color: Colors.white),
-//                       ),
-//                     );
-//                   },
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
