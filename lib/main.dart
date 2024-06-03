@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:led_zeppelin_app/components/alarm_animations_list.dart';
 import 'package:led_zeppelin_app/components/celestial.dart';
 import 'package:led_zeppelin_app/components/next_alarm.dart';
 import 'package:provider/provider.dart';
@@ -56,6 +57,11 @@ class LampState extends ChangeNotifier {
     _nextAlarm = nextAlarm;
     notifyListeners();
   }
+
+  void setSelectedAnimation(int selectedAnimation) {
+    _selectedAnimation = selectedAnimation;
+    notifyListeners();
+  }
 }
 
 class LEDZeppelinApp extends StatelessWidget {
@@ -88,6 +94,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: <Widget>[
           // The bottommost background element
@@ -130,61 +137,87 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           Column(
             children: [
-              SizedBox(height: 96),
+              const SizedBox(height: 96),
               Consumer<LampState>(
                 builder: (context, lampState, child) => NextAlarm(
                   nextAlarm: lampState.nextAlarm,
                   brightness: lampState.brightness,
+                  isOn: lampState.isOn,
                 ),
               ),
+              const SizedBox(height: 280),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Expanded(
                     child: Consumer<LampState>(
-                        builder: (context, lampState, child) => Slider(
-                            value: lampState.brightness,
-                            min: 0.0,
-                            max: 1.0,
-                            onChanged: (double value) {
-                              lampState.setBrightness(value);
-                            }),
+                      builder: (context, lampState, child) => SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 6.0,
+                          activeTrackColor: Colors.white,
+                          inactiveTrackColor: Colors.white.withOpacity(0.5),
+                          thumbColor: Colors.white,
+                          thumbShape: const RoundSliderThumbShape(
+                              enabledThumbRadius: 10.0),
+                        ),
+                        child: Slider(
+                          value: lampState.brightness,
+                          min: 0.0,
+                          max: 1.0,
+                          onChanged: (double value) {
+                            lampState.setBrightness(value);
+                          },
+                        ),
+                      ),
                     ),
                   ),
                   Consumer<LampState>(
                     builder: (context, lampState, child) => Padding(
                       padding: const EdgeInsets.only(right: 16.0),
                       child: IconButton(
-                        icon: const Icon(Icons.color_lens),
+                        icon: const Icon(
+                          Icons.color_lens,
+                          shadows: [
+                            Shadow(color: Colors.black38, blurRadius: 16.0)
+                          ],
+                        ),
+                        color: Colors.white,
+                        iconSize: 36,
                         onPressed: () {
                           showModalBottomSheet(
                             context: context,
-                            backgroundColor: const Color.fromARGB(255, 20, 20, 20),
+                            backgroundColor:
+                                const Color.fromARGB(255, 20, 20, 20),
                             builder: (BuildContext context) {
                               return Padding(
                                 padding: const EdgeInsets.all(32.0),
                                 child: SingleChildScrollView(
-                                  child: Theme(
-                                    data: Theme.of(context).copyWith(
-                                      textTheme: Theme.of(context).textTheme.apply(
-                                        bodyColor: Colors.white,
-                                        displayColor: Colors.white,
-                                      ),
-                                    ),
-                                    child: HueRingPicker(
-                                      pickerColor: lampState.color,
-                                      hueRingStrokeWidth: 30,
-                                      displayThumbColor: false,
-                                      onColorChanged: (Color color) {
-                                        if (color.red == color.green && color.green == color.blue) {
-                                          lampState.setColor(Colors.white);
-                                        } else {
-                                          lampState.setColor(HSLColor.fromColor(color).withLightness(0.7).withSaturation(1).toColor());
-                                        }
-                                      },
-                                    ),
-                                  )
-                                ),
+                                    child: Theme(
+                                  data: Theme.of(context).copyWith(
+                                    textTheme:
+                                        Theme.of(context).textTheme.apply(
+                                              bodyColor: Colors.white,
+                                              displayColor: Colors.white,
+                                            ),
+                                  ),
+                                  child: HueRingPicker(
+                                    pickerColor: lampState.color,
+                                    hueRingStrokeWidth: 30,
+                                    displayThumbColor: false,
+                                    onColorChanged: (Color color) {
+                                      if (color.red == color.green &&
+                                          color.green == color.blue) {
+                                        lampState.setColor(Colors.white);
+                                      } else {
+                                        lampState.setColor(
+                                            HSLColor.fromColor(color)
+                                                .withLightness(0.7)
+                                                .withSaturation(1)
+                                                .toColor());
+                                      }
+                                    },
+                                  ),
+                                )),
                               );
                             },
                           );
@@ -193,6 +226,17 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                 ],
+              ),
+              Expanded(
+                child: Consumer<LampState>(
+                  builder: (context, lampState, child) => AlarmAnimationsList(
+                      selectedAnimation: lampState.selectedAnimation,
+                      color: lampState.color,
+                      onAnimationSelected: (int selectedAnimation) {
+                        lampState.setSelectedAnimation(selectedAnimation);
+                      },
+                  ),
+                ),
               ),
             ],
           ),

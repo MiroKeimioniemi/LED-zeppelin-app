@@ -5,8 +5,9 @@ class NextAlarm extends StatelessWidget {
   
   final DateTime nextAlarm;
   final double brightness;
+  final bool isOn;
 
-  const NextAlarm({super.key, required this.nextAlarm, required this.brightness});
+  const NextAlarm({super.key, required this.nextAlarm, required this.brightness, required this.isOn});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +21,7 @@ class NextAlarm extends StatelessWidget {
               'Next Sunrise:',
               style: TextStyle(
                 fontSize: 16,
-                color: (brightness < 0.5)? Colors.white : Colors.black,
+                color: (brightness < 0.5 || !isOn)? Colors.white : Colors.black,
               ),
             ),
             Padding(
@@ -33,13 +34,13 @@ class NextAlarm extends StatelessWidget {
                       DateFormat('hh:mm').format(nextAlarm),
                       style: TextStyle(
                         fontSize: 64,
-                        color: (brightness < 0.5)? Colors.white : Colors.black,
+                        color: (brightness < 0.5 || !isOn)? Colors.white : Colors.black,
                       ),
                     ),
                   ),
                   IconButton(
                     icon: Icon(Icons.edit),
-                    color: (brightness < 0.5)? Colors.white : Colors.black,
+                    color: (brightness < 0.5 || !isOn)? Colors.white : Colors.black,
                     onPressed: () {},
                   ),
                 ],
