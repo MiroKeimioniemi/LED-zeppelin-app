@@ -28,14 +28,14 @@ class LampState extends ChangeNotifier {
   double _brightness = 1;
   Color _color = Colors.white; // Deal with black
   int _selectedAnimation = 1;
-  DateTime _nextAlarm = DateTime.now();
+  DateTime? _nextAlarm;
 
   // Getters
   bool get isOn => _isOn;
   double get brightness => _brightness;
   Color get color => _color;
   int get selectedAnimation => _selectedAnimation;
-  DateTime get nextAlarm => _nextAlarm;
+  DateTime? get nextAlarm => _nextAlarm;
 
   // Update functions
   void toggle() {
@@ -53,9 +53,34 @@ class LampState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setNextAlarm(DateTime nextAlarm) {
+  void setNextAlarm(DateTime? nextAlarm) {
     _nextAlarm = nextAlarm;
     notifyListeners();
+  }
+
+  Future<void> selectTime(BuildContext context) async {
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (pickedTime != null) {
+      final DateTime now = DateTime.now();
+      final DateTime pickedDateTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        pickedTime.hour,
+        pickedTime.minute,
+      );
+      if (pickedDateTime.isBefore(now)) {
+        // If the picked time is in the past, move it to the next day
+        pickedDateTime.add(const Duration(days: 1));
+      }
+      setNextAlarm(pickedDateTime);
+    } else {
+      // If the cancel button is pressed, set nextAlarm to null
+      setNextAlarm(null);
+    }
   }
 
   void setSelectedAnimation(int selectedAnimation) {
@@ -91,6 +116,11 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+
+  Future<void> _selectTime(BuildContext context) async {
+    await Provider.of<LampState>(context, listen: false).selectTime(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -143,6 +173,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   nextAlarm: lampState.nextAlarm,
                   brightness: lampState.brightness,
                   isOn: lampState.isOn,
+                  onAlarmTap: () {
+                    _selectTime(context);
+                  },
                 ),
               ),
               const SizedBox(height: 280),

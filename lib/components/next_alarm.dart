@@ -2,12 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class NextAlarm extends StatelessWidget {
-  
-  final DateTime nextAlarm;
+  final DateTime? nextAlarm;
   final double brightness;
   final bool isOn;
+  final VoidCallback onAlarmTap; // Add this line
 
-  const NextAlarm({super.key, required this.nextAlarm, required this.brightness, required this.isOn});
+  const NextAlarm({
+    Key? key,
+    required this.nextAlarm,
+    required this.brightness,
+    required this.isOn,
+    required this.onAlarmTap, // Add this line
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +24,7 @@ class NextAlarm extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Next Sunrise:',
+              'Next Alarm:',
               style: TextStyle(
                 fontSize: 16,
                 color: (brightness < 0.5 || !isOn)? Colors.white : Colors.black,
@@ -31,7 +37,7 @@ class NextAlarm extends StatelessWidget {
                 children: [
                   Center(
                     child: Text(
-                      DateFormat('hh:mm').format(nextAlarm),
+                      nextAlarm == null? '--:--' : DateFormat('HH:mm').format(nextAlarm!),
                       style: TextStyle(
                         fontSize: 64,
                         color: (brightness < 0.5 || !isOn)? Colors.white : Colors.black,
@@ -41,7 +47,7 @@ class NextAlarm extends StatelessWidget {
                   IconButton(
                     icon: Icon(Icons.edit),
                     color: (brightness < 0.5 || !isOn)? Colors.white : Colors.black,
-                    onPressed: () {},
+                    onPressed: onAlarmTap, // Use the callback here
                   ),
                 ],
               ),

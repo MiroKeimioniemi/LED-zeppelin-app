@@ -16,7 +16,7 @@ class AlarmAnimationsList extends StatelessWidget {
     AlarmAnimation(
       title: 'Red Dawn',
       duration: '10min',
-      gradient: LinearGradient(
+      gradient: const LinearGradient(
         colors: [Color(0xFFFFC047), Color(0xFF6F1515), Color(0xFF2C0D0D)],
         stops: [0, 0.74, 1.0],
         begin: Alignment.topCenter,
@@ -26,29 +26,20 @@ class AlarmAnimationsList extends StatelessWidget {
     AlarmAnimation(
       title: 'Intruder Alert',
       duration: '10sec',
-      gradient: LinearGradient(
+      gradient: const LinearGradient(
         colors: [Colors.red, Colors.blue],
         begin: Alignment.centerLeft,
         end: Alignment.centerRight,
       ),
     ),
     AlarmAnimation(
-      title: 'Red Dawn',
-      duration: '10min',
-      gradient: LinearGradient(
-        colors: [Color(0xFFFFC047), Color(0xFF6F1515), Color(0xFF2C0D0D)],
-        stops: [0, 0.74, 1.0],
+      title: 'Brighten Up',
+      duration: '1min',
+      gradient: const LinearGradient(
+        colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(255, 140, 140, 140)],
+        stops: [0, 1.0],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-      ),
-    ),
-    AlarmAnimation(
-      title: 'Intruder Alert',
-      duration: '10sec',
-      gradient: LinearGradient(
-        colors: [Colors.red, Colors.blue],
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
       ),
     ),
   ];
