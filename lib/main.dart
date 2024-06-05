@@ -26,7 +26,7 @@ class LampState extends ChangeNotifier {
   // Lamp state variables
   bool _isOn = true;
   double _brightness = 1;
-  Color _color = Colors.white; // Deal with black
+  Color _color = Colors.white;
   int _selectedAnimation = 1;
   DateTime? _nextAlarm;
 
