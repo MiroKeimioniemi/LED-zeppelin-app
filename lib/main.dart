@@ -120,8 +120,8 @@ class LampState extends ChangeNotifier {
             break;
           case '05f52bf8-4823-42c6-8647-dc89b76ad4e4':
             _brightnessCharacteristic = characteristic;
-            _subscribeToCharacteristic(_brightnessCharacteristic!, _onBrightnessReceived);
-            _brightnessCharacteristic!.read().then(_onBrightnessReceived);
+            // _subscribeToCharacteristic(_brightnessCharacteristic!, _onBrightnessReceived);
+            // _brightnessCharacteristic!.read().then(_onBrightnessReceived);
             break;
           case 'b2516e35-6917-43b7-8cad-c7065a9e0033':
             _colorCharacteristic = characteristic;
@@ -159,21 +159,21 @@ class LampState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _onBrightnessReceived(List<int> value) async {
-    await _brightnessMutex.acquire();
-    try {
-      if (value.isNotEmpty) {
-        double newBrightness = value[0] / 250.0;
-        if (newBrightness != _brightness) {
-          _brightness = newBrightness;
-          print("brightness: $_brightness");
-        }
-      }
-    } finally {
-      _brightnessMutex.release();
-      notifyListeners();
-    }
-  }
+  // void _onBrightnessReceived(List<int> value) async {
+  //   await _brightnessMutex.acquire();
+  //   try {
+  //     if (value.isNotEmpty) {
+  //       double newBrightness = value[0] / 250.0;
+  //       if (newBrightness != _brightness) {
+  //         _brightness = newBrightness;
+  //         print("brightness: $_brightness");
+  //       }
+  //     }
+  //   } finally {
+  //     _brightnessMutex.release();
+  //     notifyListeners();
+  //   }
+  // }
 
   void _onColorReceived(List<int> value) async {
     await _colorMutex.acquire();
