@@ -46,7 +46,7 @@ class LampState extends ChangeNotifier {
   final Guid _brightnessUuid = Guid('05f52bf8-4823-42c6-8647-dc89b76ad4e4');
   final Guid _colorUuid = Guid('b2516e35-6917-43b7-8cad-c7065a9e0033');
   final Guid _selectedAnimationUuid = Guid('0d72cbb7-742f-4030-b4ec-3aefb8c1eb1a');
-  final Guid _nextAlarmUuid = Guid('');
+  final Guid _nextAlarmUuid = Guid('2b3e71d1-4c3e-418e-942b-67f28951c2d3');
 
   LampState() {
     startScanning();
@@ -56,7 +56,7 @@ class LampState extends ChangeNotifier {
     notifyListeners();
     print("scanning");
     FlutterBluePlus flutterBlue = FlutterBluePlus();
-    FlutterBluePlus.startScan(timeout: const Duration(seconds: 60));
+    FlutterBluePlus.startScan(timeout: const Duration(seconds: 30));
     FlutterBluePlus.scanResults.listen((results) {
       for (ScanResult r in results) {
         // print('${r.device.platformName} found! rssi: ${r.rssi}');
@@ -74,7 +74,7 @@ class LampState extends ChangeNotifier {
 
   Future<void> _connectToDevice(BluetoothDevice device) async {
     _connectedDevice = device;
-    for (int attempt = 0; attempt <= 5; attempt++) {
+    for (int attempt = 0; attempt <= 10; attempt++) {
       try {
         await device.connect();
         break;
@@ -98,7 +98,13 @@ class LampState extends ChangeNotifier {
       _connectedDevice = null;
     }
 
-    List<BluetoothService> services = await device.discoverServices();
+    List<BluetoothService> services;
+    try {
+      services = await device.discoverServices();
+    } catch (e) {
+      startScanning();
+      return;
+    }
     BluetoothService? targetService;
     for (BluetoothService service in services) {
       if (service.uuid.toString() == '6932598e-c4fe-4855-9701-240a78abc000') {
@@ -112,18 +118,23 @@ class LampState extends ChangeNotifier {
         switch (characteristic.uuid.toString()) {
           case 'dfc1a400-3523-4626-bd77-3469dbed8b74':
             _isOnCharacteristic = characteristic;
+            _subscribeToCharacteristic(_isOnCharacteristic!, _onIsOnReceived);
             break;
           case '05f52bf8-4823-42c6-8647-dc89b76ad4e4':
             _brightnessCharacteristic = characteristic;
+            _subscribeToCharacteristic(_brightnessCharacteristic!, _onBrightnessReceived);
             break;
           case 'b2516e35-6917-43b7-8cad-c7065a9e0033':
             _colorCharacteristic = characteristic;
+            _subscribeToCharacteristic(_colorCharacteristic!, _onColorReceived);
             break;
           case '0d72cbb7-742f-4030-b4ec-3aefb8c1eb1a':
             _selectedAnimationCharacteristic = characteristic;
+            _subscribeToCharacteristic(_selectedAnimationCharacteristic!, _onAnimationReceived);
             break;
           case '2b3e71d1-4c3e-418e-942b-67f28951c2d3':
             _nextAlarmCharacteristic = characteristic;
+            _subscribeToCharacteristic(_nextAlarmCharacteristic!, _onNextAlarmReceived);
             break;
         }
       }
@@ -131,6 +142,52 @@ class LampState extends ChangeNotifier {
 
     _isConnected = true;
     notifyListeners();
+  }
+
+  void _subscribeToCharacteristic(BluetoothCharacteristic characteristic, Function(List<int>) onDataReceived) {
+    final subscription = characteristic.lastValueStream.listen(onDataReceived);
+    _connectedDevice?.cancelWhenDisconnected(subscription);
+    characteristic.setNotifyValue(true);
+  }
+
+  void _onIsOnReceived(List<int> value) {
+    _isOn = value.isNotEmpty && value[0] as bool;
+    notifyListeners();
+  }
+
+  void _onBrightnessReceived(List<int> value) {
+    if (value.isNotEmpty && value[0] != _brightness * 250.0) {
+      _brightness = value[0] / 250.0;
+      notifyListeners();
+    }
+  }
+
+  void _onColorReceived(List<int> value) {
+    if (value.length == 4) {
+      int colorValue = ByteData.view(Uint8List.fromList(value).buffer).getUint32(0, Endian.little);
+      _color = Color.fromARGB(255, (colorValue >> 16) & 0xFF, (colorValue >> 8) & 0xFF, colorValue & 0xFF);
+      notifyListeners();
+    }
+  }
+
+  void _onAnimationReceived(List<int> value) {
+    if (value.isNotEmpty) {
+      _selectedAnimation = value[0];
+      notifyListeners();
+    }
+  }
+
+  void _onNextAlarmReceived(List<int> value) {
+    if (value.length == 5) {
+      int flag = value[0];
+      int timestamp = ByteData.view(Uint8List.fromList(value.sublist(1)).buffer).getUint32(0, Endian.little);
+      if (flag == 1) {
+        _nextAlarm = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+      } else if (flag == 0) {
+        // Update the current time if needed
+      }
+      notifyListeners();
+    }
   }
 
   // Getters
@@ -153,14 +210,13 @@ class LampState extends ChangeNotifier {
 
   void setBrightness(double brightness) {
     _brightness = brightness;
-    notifyListeners();
-
     if ((_brightnessCharacteristic != null && _connectedDevice != null && _connectedDevice!.isConnected) && ((brightness - _lastSentBrightness).abs() > _brightnessThreshold)) {
       _brightnessCharacteristic!.write([(brightness * 250).toInt()]);
       _lastSentBrightness = brightness;
     } else {
       startScanning();
     }
+    notifyListeners();
   }
 
   Color _lastSentColor = Colors.black;
@@ -195,13 +251,23 @@ class LampState extends ChangeNotifier {
     if (_nextAlarmCharacteristic != null && _connectedDevice != null && _connectedDevice!.isConnected) {
       if (nextAlarm != null) {
         int value = nextAlarm.millisecondsSinceEpoch ~/ 1000;
-        Uint8List data = Uint8List(4);
+        Uint8List data = Uint8List(5); // Increase the size to 5 to accommodate the flag byte
         ByteData buffer = ByteData.view(data.buffer);
-        buffer.setUint32(0, value, Endian.little);
+        buffer.setUint8(0, 1); // Set the flag byte to 1 to indicate this is the next alarm
+        buffer.setUint32(1, value, Endian.little); // Start from the second byte
         _nextAlarmCharacteristic!.write(data);
       } else {
-        _nextAlarmCharacteristic!.write([0, 0, 0, 0]);
+        _nextAlarmCharacteristic!.write([0, 0, 0, 0, 0]);
       }
+
+      // Send the current time
+      DateTime now = DateTime.now();
+      int nowValue = now.millisecondsSinceEpoch ~/ 1000;
+      Uint8List nowData = Uint8List(5); // Increase the size to 5 to accommodate the flag byte
+      ByteData nowBuffer = ByteData.view(nowData.buffer);
+      nowBuffer.setUint8(0, 0); // Set the flag byte to 0 to indicate this is the current time
+      nowBuffer.setUint32(1, nowValue, Endian.little); // Start from the second byte
+      _nextAlarmCharacteristic!.write(nowData);
     } else {
       startScanning();
     }
