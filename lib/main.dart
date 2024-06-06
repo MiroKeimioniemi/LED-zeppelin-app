@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -26,15 +28,13 @@ void main() {
 
 // App state
 class LampState extends ChangeNotifier {
-  Timer? _debounce;
-  // Lamp state variables
   bool _isOn = true;
-  double _brightness = 1;
+  double _brightness = 0.5;
   Color _color = Colors.white;
   int _selectedAnimation = 1;
   DateTime? _nextAlarm;
   BluetoothDevice? _connectedDevice;
-  // BluetoothCharacteristic? _controlCharacteristic;
+  bool? _isConnected;
 
   BluetoothCharacteristic? _isOnCharacteristic;
   BluetoothCharacteristic? _brightnessCharacteristic;
@@ -49,82 +49,89 @@ class LampState extends ChangeNotifier {
   final Guid _nextAlarmUuid = Guid('');
 
   LampState() {
-    FlutterBluePlus flutterBlue = FlutterBluePlus();
+    startScanning();
+  }
 
+  void startScanning() {
+    notifyListeners();
+    print("scanning");
+    FlutterBluePlus flutterBlue = FlutterBluePlus();
     FlutterBluePlus.startScan(timeout: const Duration(seconds: 60));
     FlutterBluePlus.scanResults.listen((results) {
       for (ScanResult r in results) {
-        print('${r.device.platformName} found! rssi: ${r.rssi}');
+        // print('${r.device.platformName} found! rssi: ${r.rssi}');
         if (r.device.platformName == 'LED Zeppelin') {
-          print("connecting to ${r.device.platformName}");
-          FlutterBluePlus.stopScan(); 
+          // print("connecting to ${r.device.platformName}");
+          FlutterBluePlus.stopScan();
           _connectToDevice(r.device);
           break;
         }
       }
     });
+
+    notifyListeners();
   }
 
   Future<void> _connectToDevice(BluetoothDevice device) async {
-  _connectedDevice = device;
-  for (int attempt = 0; attempt <= 10; attempt++) {
-    try {
-      await device.connect();
-      break; // If the connection is successful, exit the loop
-    } catch (e) {
-      if (attempt == 10) rethrow; // If this was the last attempt, rethrow the exception
-      await Future.delayed(const Duration(seconds: 1)); // Wait for a second before retrying
+    _connectedDevice = device;
+    for (int attempt = 0; attempt <= 5; attempt++) {
+      try {
+        await device.connect();
+        break;
+      } catch (e) {
+        _isConnected = false;
+        _isOnCharacteristic = null;
+        _brightnessCharacteristic = null;
+        _colorCharacteristic = null;
+        _selectedAnimationCharacteristic = null;
+        _nextAlarmCharacteristic = null;
+        _connectedDevice = null;
+        if (attempt == 5) startScanning();
+        await Future.delayed(const Duration(seconds: 1));
+      }
+      _isConnected = false;
+      _isOnCharacteristic = null;
+      _brightnessCharacteristic = null;
+      _colorCharacteristic = null;
+      _selectedAnimationCharacteristic = null;
+      _nextAlarmCharacteristic = null;
+      _connectedDevice = null;
     }
-  }
-  List<BluetoothService> services = await device.discoverServices();
-  
-  BluetoothService? targetService;
-  
-  for (BluetoothService service in services) {
-    if (service.uuid.toString() == '6932598e-c4fe-4855-9701-240a78abc000') {
-      targetService = service;
-      break;
-    }
-  }
 
-  if (targetService != null) {
-    for (BluetoothCharacteristic characteristic in targetService.characteristics) {
-      switch (characteristic.uuid.toString()) {
-        case 'dfc1a400-3523-4626-bd77-3469dbed8b74':
-          _isOnCharacteristic = characteristic;
-          break;
-        case '05f52bf8-4823-42c6-8647-dc89b76ad4e4':
-          _brightnessCharacteristic = characteristic;
-          break;
-        case 'b2516e35-6917-43b7-8cad-c7065a9e0033':
-          _colorCharacteristic = characteristic;
-          break;
-        case '0d72cbb7-742f-4030-b4ec-3aefb8c1eb1a':
-          _selectedAnimationCharacteristic = characteristic;
-          break;
-        case '2b3e71d1-4c3e-418e-942b-67f28951c2d3':
-          _nextAlarmCharacteristic = characteristic;
-          break;
+    List<BluetoothService> services = await device.discoverServices();
+    BluetoothService? targetService;
+    for (BluetoothService service in services) {
+      if (service.uuid.toString() == '6932598e-c4fe-4855-9701-240a78abc000') {
+        targetService = service;
+        break;
       }
     }
-  }
 
-    // if (_controlCharacteristic != null) {
-    //   _sendLampState();
-    // }
-  }
+    if (targetService != null) {
+      for (BluetoothCharacteristic characteristic in targetService.characteristics) {
+        switch (characteristic.uuid.toString()) {
+          case 'dfc1a400-3523-4626-bd77-3469dbed8b74':
+            _isOnCharacteristic = characteristic;
+            break;
+          case '05f52bf8-4823-42c6-8647-dc89b76ad4e4':
+            _brightnessCharacteristic = characteristic;
+            break;
+          case 'b2516e35-6917-43b7-8cad-c7065a9e0033':
+            _colorCharacteristic = characteristic;
+            break;
+          case '0d72cbb7-742f-4030-b4ec-3aefb8c1eb1a':
+            _selectedAnimationCharacteristic = characteristic;
+            break;
+          case '2b3e71d1-4c3e-418e-942b-67f28951c2d3':
+            _nextAlarmCharacteristic = characteristic;
+            break;
+        }
+      }
+    }
 
-  // void _sendLampState() {
-  //   if (_controlCharacteristic == null) return;
-  //   List<int> values = [
-  //     _isOn ? 1 : 0,
-  //     (_brightness * 100).toInt(),
-  //     _color.red,
-  //     _color.green,
-  //     _color.blue
-  //   ];
-  //   _controlCharacteristic!.write(values);
-  // }
+    _isConnected = true;
+    notifyListeners();
+  }
 
   // Getters
   bool get isOn => _isOn;
@@ -132,36 +139,72 @@ class LampState extends ChangeNotifier {
   Color get color => _color;
   int get selectedAnimation => _selectedAnimation;
   DateTime? get nextAlarm => _nextAlarm;
+  bool get isConnected => _isConnected ?? false;
 
   // Update functions
   void toggle() {
     _isOn = !_isOn;
     notifyListeners();
-    if (_isOnCharacteristic != null) _isOnCharacteristic!.write([isOn ? 1 : 0]);
+    (_isOnCharacteristic != null && _connectedDevice != null && _connectedDevice!.isConnected) ? _isOnCharacteristic!.write([isOn ? 1 : 0]) : startScanning();
   }
+
+  double _lastSentBrightness = -1.0;
+  final double _brightnessThreshold = 0.05;
 
   void setBrightness(double brightness) {
     _brightness = brightness;
     notifyListeners();
-    // if (_brightnessCharacteristic != null) _brightnessCharacteristic!.write([(brightness * 250).toInt()]);
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 5), () {
-      if (_brightnessCharacteristic != null) {
-        _brightnessCharacteristic!.write([(brightness * 250).toInt()]);
-      }
-    });
+
+    if ((_brightnessCharacteristic != null && _connectedDevice != null && _connectedDevice!.isConnected) && ((brightness - _lastSentBrightness).abs() > _brightnessThreshold)) {
+      _brightnessCharacteristic!.write([(brightness * 250).toInt()]);
+      _lastSentBrightness = brightness;
+    } else {
+      startScanning();
+    }
   }
+
+  Color _lastSentColor = Colors.black;
+  final double _colorThreshold = 16.0;
 
   void setColor(Color color) {
     _color = color;
     notifyListeners();
-    // _sendLampState();
+
+    double colorDifference = sqrt(
+      pow(color.red - _lastSentColor.red, 2) +
+      pow(color.green - _lastSentColor.green, 2) +
+      pow(color.blue - _lastSentColor.blue, 2)
+    );
+
+    if (_colorCharacteristic != null && _connectedDevice != null && _connectedDevice!.isConnected && colorDifference > _colorThreshold) {
+      int value = (color.red << 16) | (color.green << 8) | color.blue;
+      Uint8List data = Uint8List(4);
+      ByteData buffer = ByteData.view(data.buffer);
+      buffer.setUint32(0, value, Endian.little);
+      _colorCharacteristic!.write(data);
+      _lastSentColor = color;
+    } else {
+      startScanning();
+    }
   }
 
   void setNextAlarm(DateTime? nextAlarm) {
     _nextAlarm = nextAlarm;
     notifyListeners();
-    // _sendLampState();
+
+    if (_nextAlarmCharacteristic != null && _connectedDevice != null && _connectedDevice!.isConnected) {
+      if (nextAlarm != null) {
+        int value = nextAlarm.millisecondsSinceEpoch ~/ 1000;
+        Uint8List data = Uint8List(4);
+        ByteData buffer = ByteData.view(data.buffer);
+        buffer.setUint32(0, value, Endian.little);
+        _nextAlarmCharacteristic!.write(data);
+      } else {
+        _nextAlarmCharacteristic!.write([0, 0, 0, 0]);
+      }
+    } else {
+      startScanning();
+    }
   }
 
   Future<void> selectTime(BuildContext context) async {
@@ -179,12 +222,10 @@ class LampState extends ChangeNotifier {
         pickedTime.minute,
       );
       if (pickedDateTime.isBefore(now)) {
-        // If the picked time is in the past, move it to the next day
         pickedDateTime.add(const Duration(days: 1));
       }
       setNextAlarm(pickedDateTime);
     } else {
-      // If the cancel button is pressed, set nextAlarm to null
       setNextAlarm(null);
     }
   }
@@ -192,8 +233,10 @@ class LampState extends ChangeNotifier {
   void setSelectedAnimation(int selectedAnimation) {
     _selectedAnimation = selectedAnimation;
     notifyListeners();
+    (_selectedAnimationCharacteristic != null && _connectedDevice != null && _connectedDevice!.isConnected) ? _selectedAnimationCharacteristic!.write([selectedAnimation]) : startScanning();
   }
 }
+
 
 class LEDZeppelinApp extends StatelessWidget {
   const LEDZeppelinApp({super.key});
@@ -222,7 +265,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
   Future<void> _selectTime(BuildContext context) async {
     await Provider.of<LampState>(context, listen: false).selectTime(context);
   }
@@ -369,15 +411,28 @@ class _MyHomePageState extends State<MyHomePage> {
               Expanded(
                 child: Consumer<LampState>(
                   builder: (context, lampState, child) => AlarmAnimationsList(
-                      selectedAnimation: lampState.selectedAnimation,
-                      color: lampState.color,
-                      onAnimationSelected: (int selectedAnimation) {
-                        lampState.setSelectedAnimation(selectedAnimation);
-                      },
+                    selectedAnimation: lampState.selectedAnimation,
+                    color: lampState.color,
+                    onAnimationSelected: (int selectedAnimation) {
+                      lampState.setSelectedAnimation(selectedAnimation);
+                    },
                   ),
                 ),
               ),
             ],
+          ),
+          Consumer<LampState>(
+            builder: (context, lampState, child) {
+              if (!lampState.isConnected || lampState._connectedDevice == null) {
+                return const AlertDialog(
+                  title: Text('Connection Required'),
+                  content: Text(
+                      'Please turn on the lamp and Bluetooth, and allow necessary permissions.'),
+                );
+              } else {
+                return Container();
+              }
+            },
           ),
         ],
       ),
