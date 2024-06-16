@@ -15,6 +15,7 @@ class Midground extends StatelessWidget {
   const Midground({super.key, required this.color, required this.brightness, required this.isOn});
 
   // SVG definitions
+  // ViewBox represents the coordinate system of the SVG image, not necessarily the actual size of the image, which is defined using the SvgPicture parameters.
   final String svg1 = 
     '''<svg viewBox="0 0 360 374" fill="none" xmlns="http://www.w3.org/2000/svg">
        <path d="M82 43.0833C60.4 36.4833 18.3333 69.6667 0 87.0833V374H360V0C335.667 18.9444 271.4 58.85 209 66.9167C131 77 109 51.3333 82 43.0833Z" fill="#BFBFBF"/>

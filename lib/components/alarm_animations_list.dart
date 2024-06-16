@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
+// AlarmAnimationsList widget displays a scrollable list of the available alarm animations
 class AlarmAnimationsList extends StatelessWidget {
   final int selectedAnimation;
   final Color color;
   final Function(int) onAnimationSelected;
 
+  // AlarmAnimationsList widget constructor with selectedAnimation, color and onAnimationSelected parameters
   AlarmAnimationsList({
     super.key,
     required this.selectedAnimation,
@@ -13,6 +15,7 @@ class AlarmAnimationsList extends StatelessWidget {
     required this.onAnimationSelected,
   });
 
+  // Hardcoded list of predefined alarm animations with titles, durations and gradients for visualization
   final List<AlarmAnimation> alarmAnimations = [
     AlarmAnimation(
       title: 'Red Dawn',
@@ -51,10 +54,13 @@ class AlarmAnimationsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const itemHeight =
-        120.0; // Adjust this value to match the height of your items
+        120.0;
+    // ScrollController to control the scroll position of the list
     final controller = ScrollController();
 
+    // Return a ListView of the alarm animations with a card for each animation
     return NotificationListener<UserScrollNotification>(
+      // Listen for user scroll notifications to snap the list to the nearest item when the user stops scrolling
       onNotification: (notification) {
         if (notification.direction == ScrollDirection.idle &&
             !controller.position.isScrollingNotifier.value) {
@@ -69,6 +75,7 @@ class AlarmAnimationsList extends StatelessWidget {
         }
         return true;
       },
+      // ListView with a builder to create the list of alarm animations
       child: ListView.builder(
         controller: controller,
         physics: const BouncingScrollPhysics(),
@@ -88,6 +95,7 @@ class AlarmAnimationsList extends StatelessWidget {
               ),
             ),
             elevation: 10,
+            // ListTile for creating the cards with the animation title, duration, gradient and leading container
             child: ListTile(
               contentPadding:
                   const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
@@ -118,6 +126,7 @@ class AlarmAnimationsList extends StatelessWidget {
   }
 }
 
+// AlarmAnimation class to store the title, duration and gradient of an alarm animation
 class AlarmAnimation {
   final String title;
   final String duration;
