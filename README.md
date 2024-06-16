@@ -1,6 +1,8 @@
 # led_zeppelin_app
 
-A single page flutter application for controlling the gesture controlled [LED Zeppelin lamp prototype](https://digital-fabrication-portfolio-miro-keimioniemi-a2f2c11a6e705b8f.gitlab.io/final-project/), made as the final project for the 2024 [Digital Fabrication](https://www.aalto.fi/en/minors/digital-fabrication-minor) [Fab Academy](https://fabacademy.org/) overlay course at [Aalto Fablab](https://studios.aalto.fi/fablab/), via Bluetooth Low Energy (BLE).
+A single page flutter application for controlling the gesture controlled [LED Zeppelin lamp prototype](https://digital-fabrication-portfolio-miro-keimioniemi-a2f2c11a6e705b8f.gitlab.io/final-project/), made as the final project for the 2024 [Digital Fabrication](https://www.aalto.fi/en/minors/digital-fabrication-minor) [Fab Academy](https://fabacademy.org/) overlay course at [Aalto Fablab](https://studios.aalto.fi/fablab/), via Bluetooth Low Energy (BLE). 
+
+Documentation for this application can be found [here](https://digital-fabrication-portfolio-miro-keimioniemi-a2f2c11a6e705b8f.gitlab.io/p/interface-and-application-programming/).
 
 See also
 - [My digital fabrication portfolio](https://digital-fabrication-portfolio-miro-keimioniemi-a2f2c11a6e705b8f.gitlab.io/)
